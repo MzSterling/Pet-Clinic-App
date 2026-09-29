@@ -236,7 +236,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }} #change from env to secret
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ secrets.AWS_REGION }}
  
       - name: Login to ECR
         id: login-ecr
@@ -257,31 +257,31 @@ jobs:
           docker push \
             $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-  # docker-image-scan:
-  #   name: Trivy Scan - ECR Image
-  #   runs-on: ubuntu-latest
-  #   needs: docker-build-push
-  #   permissions:
-  #     id-token: write
-  #     contents: read
-  #   steps:
-  #     - name: Configure AWS credentials
-  #       uses: aws-actions/configure-aws-credentials@v4
-  #       with:
-  #         role-to-assume: ${{ secrets.AWS_ROLE_ARN }} #change from env to secret
-  #         aws-region: ${{ env.AWS_REGION }}
+  docker-image-scan:
+    name: Trivy Scan - ECR Image
+    runs-on: ubuntu-latest
+    needs: docker-build-push
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }} #change from env to secret
+          aws-region: ${{ secrets.AWS_REGION }}
  
-  #     - name: Login to ECR
-  #       id: login-ecr
-  #       uses: aws-actions/amazon-ecr-login@v2
+      - name: Login to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
  
-  #     - name: Scan image with Trivy
-  #       uses: aquasecurity/trivy-action@master
-  #       with:
-  #         image-ref: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
-  #         format: table
-  #         exit-code: '0'
-  #         severity: CRITICAL,HIGH
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+          format: table
+          exit-code: '0'
+          severity: CRITICAL,HIGH
 
   # deploy-ecs:
   #   name: Deploy to ECS
